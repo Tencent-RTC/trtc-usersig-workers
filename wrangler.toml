@@ -1,0 +1,9 @@
+name = "trtc-usersig-workers"
+compatibility_date = "2023-01-01"
+
+[vars]
+SDKAPPID = "production_value"
+SECRET = ""
+
+
+

@@ -11,7 +11,6 @@ const app = new Hono<{ Bindings: Bindings}>()
 
 
 app.post('/config', async (c) => {
-
     console.log(c.req)
 
     const body = await c.req.json()

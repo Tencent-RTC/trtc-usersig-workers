@@ -9,7 +9,7 @@ compatibility_flags = [ "nodejs_compat" ]
 
 
 [vars]
-SDKAPPID = 14xxxxxxxx
+SDKAPPID = 123456
 SECRET = "xxxxxxxxxx"
 
 

@@ -1,5 +1,9 @@
 import { Hono } from 'hono'
+
+import { serveStatic } from 'hono/cloudflare-workers'
+
 import Sig from './usersig'
+
 
 
 type Bindings = {
@@ -27,6 +31,13 @@ app.post('/config', async (c) => {
     })
 })
 
+
+app.get('/pusher', serveStatic({ path: './pusher.html'}))
+
+app.get('/player', serveStatic({ path: './player.html'}))
+
+
+app.get('/', serveStatic({ path: './index.html'}))
 
 app.get('/test', (c) => c.text('Hello Hono!'))
 

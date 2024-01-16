@@ -1,27 +1,16 @@
 name = "trtc-usersig-workers"
 compatibility_date = "2023-01-01"
 
-
 compatibility_flags = [ "nodejs_compat" ]
 
-
-
-
+main = "src/index.ts"
 
 [vars]
-SDKAPPID = 123456
+SDKAPPID = 140011234444
 SECRET = "xxxxxxxxxx"
 
 
-# [[kv_namespaces]]
-# binding = "MY_KV_NAMESPACE"
-# id = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+[site]
+bucket = "./assets"
 
-# [[r2_buckets]]
-# binding = "MY_BUCKET"
-# bucket_name = "my-bucket"
 
-# [[d1_databases]]
-# binding = "DB"
-# database_name = "my-database"
-# database_id = ""

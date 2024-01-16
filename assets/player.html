@@ -1,0 +1,139 @@
+<!doctype html>
+<html>
+<head>
+<meta http-equiv='Content-Type' content='text/html; charset=UTF-8'>
+<title> WTN demos  </title>
+    <style type="text/css">
+        video {
+            max-width: 100%;
+        }
+        .room {
+            cursor: pointer;
+        }
+        div.select {
+            display: inline-block;
+            margin: 0 0 1em 0;
+        }
+    </style>
+
+    <script type='module'>
+    
+    
+        const WTNBaseURL = "https://signaling.rtc.qq.com/v2";
+    
+        let remoteVideo = null;
+        let sessionid = Math.random().toString(36).substring(10);
+        let streamid;
+
+
+        async function init() {
+            remoteVideo = document.getElementById('remote_video');
+        }
+
+        async function play() {
+            streamid = document.querySelector('#streamid-input').value;
+            if (streamid) {
+                document.querySelector('#streamid-place').innerText = 'streamid:' + streamid;
+            } else {
+                alert('Please enter streamid');
+                return;
+            }
+
+            let res = await fetch('/config', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    userid: sessionid,
+                    streamid:streamid
+                })
+            });
+            
+            const  {sdkappid,userSig}  = await res.json();
+            
+            const playUrl = `${WTNBaseURL}/sub/${sdkappid}/${streamid}?SessionID=${sessionid}`;
+            console.log("playUrl", playUrl);
+
+            let options = {
+                iceServers: [],
+                iceTransportPolicy: "all", // relay or all
+                bundlePolicy: "max-bundle",
+                rtcpMuxPolicy: "require",
+                sdpSemantics: "unified-plan",
+            };
+            const peerconnection = new RTCPeerConnection(options);
+
+            peerconnection.ontrack = function (event) {
+                remoteVideo.srcObject = event.streams[0];
+            }
+
+            const transceiverInit = {
+                direction: "recvonly",
+            };
+
+            const videoTransceiver = peerconnection.addTransceiver(
+                "video",
+                transceiverInit
+            );
+
+            videoTransceiver.receiver.playoutDelay = 0;
+
+            const offer = await peerconnection.createOffer();
+            await peerconnection.setLocalDescription(offer);
+
+
+            res = await fetch(playUrl, {
+                method: "POST",
+                headers: { 
+                    "Content-Type": "application/sdp",
+                    "Authorization": `Bearer ${userSig}`
+                 },
+                body: offer.sdp,
+            });
+
+            if (!res.ok) {
+                throw new Error(`WTN play error:${res.status} ${res.statusText}`);
+            }
+
+            const answer = await res.text();
+
+            const answerDesc = {
+                type: "answer",
+                sdp: answer,
+            };
+
+            await peerconnection.setRemoteDescription(
+                answerDesc
+            );
+        }
+
+
+        window.init = init;
+        window.play = play;
+    </script>
+</head>
+<body onload="init();">
+	<h1>WTN Player</h1>
+
+    <p id="streamid-place"></p>
+
+	<div id="conference">
+        <form>
+            <label for="streamid-input">streamid</label>
+            <input type="text" id="streamid-input" value="123456"/>
+        </form>
+        <button onclick="play();">Play</button>
+
+		<div>
+			Remote video<br />
+			<div style="">
+				<video id="remote_video"  playsinline autoplay>
+				</video>
+			</div>
+
+			<span id="state_span">  </span>
+		</div>
+	</div>
+</body>
+</html>

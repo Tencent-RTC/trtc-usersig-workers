@@ -1,0 +1,146 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta http-equiv='Content-Type' content='text/html; charset=UTF-8'>
+    <title> WTN demos </title>
+    <style type="text/css">
+        video {
+            max-width: 100%;
+        }
+
+        .room {
+            cursor: pointer;
+        }
+
+        div.select {
+            display: inline-block;
+            margin: 0 0 1em 0;
+        }
+    </style>
+
+    <script type='module'>
+
+
+        const WTNBaseURL = "https://signaling.rtc.qq.com/v2";
+
+        let localVideo = null;
+        let sessionid = Math.random().toString(36).substring(7);
+        let streamid;
+
+
+        async function init() {
+            localVideo = document.getElementById('local_video');
+        }
+
+        async function push() {
+            streamid = document.querySelector('#streamid-input').value;
+            if (streamid) {
+                document.querySelector('#streamid-place').innerText = 'streamid:' + streamid;
+            } else {
+                alert('Please enter streamid');
+                return;
+            }
+
+            let res = await fetch('/config', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    userid: sessionid,
+                    streamid: streamid
+                })
+            });
+
+            const { sdkappid, userSig } = await res.json();
+
+            const pushUrl = `${WTNBaseURL}/pub/${sdkappid}/${streamid}?SessionID=${sessionid}`;
+            console.log("pushUrl", pushUrl);
+
+            let options = {
+                iceServers: [],
+                iceTransportPolicy: "all", // relay or all
+                bundlePolicy: "max-bundle",
+                rtcpMuxPolicy: "require",
+                sdpSemantics: "unified-plan",
+            };
+
+            const constraints = {
+                video: { width: { exact: 640 }, height: { exact: 480 } },
+                audio: true
+            }
+            const stream = await navigator.mediaDevices.getUserMedia(constraints);
+            const peerconnection = new RTCPeerConnection(options);
+
+            await peerconnection.addTransceiver(stream.getAudioTracks()[0], {
+                direction: "sendonly",
+                streams: [stream],
+            });
+            await peerconnection.addTransceiver(stream.getVideoTracks()[0], {
+                direction: "sendonly",
+                streams: [stream],
+            });
+    
+
+            const offer = await peerconnection.createOffer();
+            await peerconnection.setLocalDescription(offer);
+
+
+            res = await fetch(pushUrl, {
+                method: "POST",
+                headers: { 
+                    "Content-Type": "application/sdp",
+                    "Authorization": `Bearer ${userSig}`
+                 },
+                body: offer.sdp,
+            });
+
+            if (!res.ok) {
+                throw new Error(`WTN push error:${res.status} ${res.statusText}`);
+            }
+
+            const answer = await res.text();
+
+            const answerDesc = {
+                type: "answer",
+                sdp: answer,
+            };
+
+            localVideo.srcObject = stream;
+            await peerconnection.setRemoteDescription(
+                answerDesc
+            );
+
+        }
+
+        window.init = init;
+        window.push = push;
+    </script>
+</head>
+
+<body onload="init();">
+    <h1>WTN Pusher</h1>
+
+    <p id="streamid-place"></p>
+
+    <div id="conference">
+        <form>
+            <label for="streamid-input">streamid</label>
+            <input type="text" id="streamid-input" value="123456" />
+        </form>
+        <button onclick="push();">Push</button>
+
+        <div>
+            Local video<br />
+            <div style="">
+                <video id="local_video" playsinline autoplay muted >
+                </video>
+            </div>
+
+            <span id="state_span"> </span>
+        </div>
+    </div>
+</body>
+
+</html>

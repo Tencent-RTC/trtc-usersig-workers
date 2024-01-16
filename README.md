@@ -1,14 +1,17 @@
 
-# trtc-usersig-worker
+# trtc-usersig-workers
 trtc usersig service run on cloudflare workers
 
 
-[![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/Tencent-RTC/trtc-usersig-workers)
 
 
-- Config your sdkappid and secret in wrangler.toml
+### Local Dev  
 
-```
+
+1、Config your sdkappid and secret in wrangler.toml
+
+
+```yaml
 [vars]
 SDKAPPID = 14xxxxxxxx
 SECRET = "xxxxxxxxxx"
@@ -16,15 +19,36 @@ SECRET = "xxxxxxxxxx"
 ```
 
 
-- Local Dev
-
-```
+2、Start local server  
+```shell
 npm install
 npm run dev
 ```
 
 
-- Deploy to cloudflare workers
+
+### Deploy to cloudflare workers
+
+
+
+1、Config your sdkappid and secret in wrangler.toml
+
+
+```yaml
+[vars]
+SDKAPPID = 14xxxxxxxx
+SECRET = "xxxxxxxxxx"
+
 ```
+
+2、You need to have a cloudflare account
+
+
+3、Deploy
+
+```shell
 npm run deploy
 ```
+
+You should get some workers url like  `https://trtc-usersig-workers.xxxxxxx.workers.dev`
+
